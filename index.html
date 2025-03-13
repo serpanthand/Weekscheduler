@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aesthetic Task Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #0d0d1a 60%, #1c2526 100%); /* Subtle gradient, darker at the bottom */
+            color: #d3d3d3; /* Light gray for text, inspired by cloud highlights */
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .day-panel {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(44, 62, 80, 0.1)); /* Subtle gradient for cloud-like glow */
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05); /* Subtle white border, like moon glow */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 10px rgba(44, 62, 80, 0.2); /* Reduced glow */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .day-panel:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.7), 0 0 15px rgba(44, 62, 80, 0.3); /* Slightly enhanced glow on hover */
+        }
+
+        .day-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #b0c4de; /* Light steel blue, inspired by moonlit clouds */
+            text-align: center;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid rgba(176, 196, 222, 0.3); /* Matching border */
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Deep shadow for contrast */
+        }
+
+        .task-input {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(44, 62, 80, 0.05)); /* Very subtle gradient */
+            color: #d3d3d3; /* Light gray text */
+            outline: none;
+            transition: background 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(44, 62, 80, 0.1)); /* Slightly lighter on focus */
+        }
+
+        button {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #4b5e77, #b0c4de); /* Gradient inspired by clouds and moon */
+            color: #fff; /* White text for contrast */
+            cursor: pointer;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 0 8px rgba(44, 62, 80, 0.2); /* Subtle glow */
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            opacity: 0.95;
+            box-shadow: 0 0 12px rgba(44, 62, 80, 0.3); /* Slightly enhanced glow on hover */
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.8rem 0;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(44, 62, 80, 0.08)); /* Very subtle gradient */
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            box-shadow: 0 0 5px rgba(44, 62, 80, 0.1); /* Minimal glow */
+        }
+
+        .task-item.completed {
+            opacity: 0;
+            transform: translateX(20px);
+            pointer-events: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-text {
+            flex: 1;
+            margin-left: 1rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #b0c4de; /* Matching the moonlit theme */
+        }
+
+        .delete-btn {
+            background: rgba(75, 94, 119, 0.4); /* Darker shade for delete button */
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            margin-left: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: rgba(75, 94, 119, 0.6); /* Slightly lighter on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="scheduler"></div>
+
+    <script>
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const scheduler = document.getElementById('scheduler');
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || {};
+
+        function initScheduler() {
+            days.forEach(day => {
+                const panel = document.createElement('div');
+                panel.className = 'day-panel';
+                panel.innerHTML = `
+                    <h2 class="day-title">${day}</h2>
+                    <div class="task-input">
+                        <input type="text" placeholder="Add new task (Press Enter)" id="input-${day}">
+                        <button onclick="addTask('${day}')">Add</button>
+                    </div>
+                    <ul class="task-list" id="list-${day}"></ul>
+                `;
+                scheduler.appendChild(panel);
+                
+                // Add Enter key listener
+                const input = panel.querySelector(`#input-${day}`);
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        addTask(day);
+                    }
+                });
+
+                if (!tasks[day]) tasks[day] = [];
+                renderTasks(day);
+            });
+        }
+
+        function addTask(day) {
+            const input = document.getElementById(`input-${day}`);
+            const taskText = input.value.trim();
+            
+            if (taskText) {
+                tasks[day].push({ text: taskText, completed: false });
+                saveTasks();
+                renderTasks(day);
+                input.value = '';
+            }
+        }
+
+        function toggleTask(day, index) {
+            tasks[day][index].completed = !tasks[day][index].completed;
+            const taskElement = document.getElementById(`task-${day}-${index}`);
+            taskElement.classList.add('completed');
+            setTimeout(() => {
+                tasks[day] = tasks[day].filter(task => !task.completed);
+                saveTasks();
+                renderTasks(day);
+            }, 500);
+        }
+
+        function deleteTask(day, index) {
+            tasks[day].splice(index, 1);
+            saveTasks();
+            renderTasks(day);
+        }
+
+        function renderTasks(day) {
+            const list = document.getElementById(`list-${day}`);
+            list.innerHTML = tasks[day].map((task, index) => `
+                <li class="task-item" id="task-${day}-${index}">
+                    <input type="checkbox" class="task-checkbox" 
+                        ${task.completed ? 'checked' : ''} 
+                        onchange="toggleTask('${day}', ${index})">
+                    <span class="task-text">${task.text}</span>
+                    <button class="delete-btn" onclick="deleteTask('${day}', ${index})">×</button>
+                </li>
+            `).join('');
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        initScheduler();
+    </script>
+</body>
+</html>
