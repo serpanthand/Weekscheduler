@@ -143,6 +143,25 @@
         .delete-btn:hover {
             background: rgba(75, 94, 119, 0.6); /* Slightly lighter on hover */
         }
+
+        /* Custom scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: linear-gradient(180deg, #0d0d1a 60%, #1c2526 100%);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(44, 62, 80, 0.1));
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(44, 62, 80, 0.2));
+        }
     </style>
 </head>
 <body>
